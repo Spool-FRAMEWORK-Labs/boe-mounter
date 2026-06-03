@@ -13,11 +13,13 @@ import software.spool.mounter.api.adapter.AlwaysClosedWindowPolicy;
 import software.spool.mounter.api.adapter.NoOpMountCheckpoint;
 import software.spool.mounter.api.builder.MounterBuilderFactory;
 import software.spool.mounter.api.model.ContentType;
+import software.spool.mounter.api.model.GenericRecord;
 import software.spool.mounter.api.port.ExtensionResolver;
 import software.spool.mounter.api.port.MountTarget;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 public class Application {
 
@@ -36,7 +38,17 @@ public class Application {
                 .emittingWith(PluginResolver.resolve(EventBusProvider.class, PluginConfiguration.empty()))
                 .pollingWith(PollingPolicy.ONCE)
                 .writingWith(PluginResolver.get(DataMartWriterProvider.class, "RAW_FILE_SYSTEM").create(PluginConfiguration.builder().with("path", "D:/spool/datalake").build()))
-                .partitioningWith((r, p, t) -> PartitionKey.ofEntries().with("fileType", ContentType.detect(p)).build())
+                .partitioningWith((r, p, t) -> buildDatePartitionKeyFrom(r, p))
+                .build();
+    }
+
+    private static PartitionKey buildDatePartitionKeyFrom(GenericRecord record, byte[] payload) {
+        LocalDate publishDate = LocalDate.parse(record.getNested("payload").getString("publish_date"), DateTimeFormatter.BASIC_ISO_DATE);
+        return PartitionKey.ofEntriesWithoutDate()
+                .with("year", String.valueOf(publishDate.getYear()))
+                .with("month", String.format("%02d", publishDate.getMonthValue()))
+                .with("day", String.format("%02d", publishDate.getDayOfMonth()))
+                .with("fileType", ContentType.detect(payload))
                 .build();
     }
 
