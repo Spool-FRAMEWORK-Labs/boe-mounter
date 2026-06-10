@@ -58,7 +58,7 @@ boe-mounter/
 
 - Java 21
 - Maven 3.8+
-- Spool framework runtime (`io.github.spool-framework:runtime:1.0.0-SNAPSHOT`) installed in your local Maven repository
+- Spool framework runtime (`io.github.spool-framework:runtime:1.1.2`) installed in your local Maven repository
 - A populated data lake at `D:/spool/datalake` with BOE records ingested for today
 
 ## Build
